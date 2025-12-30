@@ -1,0 +1,13 @@
+To create requirements
+pip freeze > requirements.txt
+
+To install requirements
+pip install -r requirements.txt
+
+
+git clone Provide HTTP link
+git status
+git add .
+git commit -m"Provide Comment"
+git push origin main
+git pull origin main
