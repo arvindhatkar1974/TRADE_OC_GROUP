@@ -1,4 +1,3 @@
-#--Final Copy of TRADE_OC4.py
 import json
 import os
 import os.path
