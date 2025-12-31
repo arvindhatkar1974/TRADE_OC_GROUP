@@ -290,9 +290,11 @@ class APH_ARM:
         filename = f"std_str_prices_backup_{timestamp}.csv"
         self.std_str_file = open(filename, 'w', newline='', encoding='utf-8')
         self.std_str_csv_writer = csv.writer(self.std_str_file)
-        self.std_str_csv_writer.writerow([
-            'Time', 'Std CE', 'Std PE', 'Std UDS', 'Str CE', 'Str PE','Str UDS', 'AVG_UDS', 'BUY_CE', 'BUY_PE'
-        ])
+        self.std_str_csv_writer.writerow(['Time','Std CE','Std PE','Str CE','Str PE',
+                                          'Std UDS','Str UDS','AVG_UDS',
+                                          'Uds_diff',
+                                          'R_Counter','F_Counter',
+                                          'BUY_CE','BUY_PE'])
         self.std_str_file.flush()  # Ensure write to disk without closing
         print(f"CSV backup started: {filename}")
 
@@ -2211,16 +2213,16 @@ def OTM_Blink_Status():
                                             timestamp,
                                             ARM.STD_CE_Price_Cur,
                                             ARM.STD_PE_Price_Cur,
-                                            ARM.STD_UDS_Cur,
                                             ARM.STR_CE_Price_Cur,
                                             ARM.STR_PE_Price_Cur,
+                                            ARM.STD_UDS_Cur,
                                             ARM.STR_UDS_Cur,
                                             ARM.AVG_UDS_Cur,
-                                            ARM.CONFIRM_BUYCE_Cur,
-                                            ARM.CONFIRM_BUYPE_Cur,
+                                            f"{Uds_Diff:.3f}",
                                             ARM.R_EDGE_Counter,
                                             ARM.F_EDGE_Counter,
-                                            f"{Uds_Diff:.3f}"
+                                            ARM.CONFIRM_BUYCE_Cur,
+                                            ARM.CONFIRM_BUYPE_Cur
                                         ])
                 ARM.std_str_file.flush()  # Ensure write to disk without closing
 
@@ -2559,31 +2561,34 @@ def APH_MAIN(stop_scheduled=False):
                                                                     timestamp,
                                                                     ARM.STD_CE_Symbol,
                                                                     ARM.STD_PE_Symbol,
-                                                                    "UDS",
                                                                     ARM.STR_CE_Symbol,
                                                                     ARM.STR_PE_Symbol,
                                                                     "UDS",
                                                                     "UDS",
-                                                                    "Signal",
-                                                                    "Signal",
+                                                                    "UDS",
+                                                                    "Diff",
                                                                     "Rising",
                                                                     "Falling",
-                                                                    "Diff"
+                                                                    "Signal",
+                                                                    "Signal"
+                                                                ])
+                                        ARM.std_str_csv_writer.writerow([
+                                                                    f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
                                                                 ])
                                         ARM.std_str_csv_writer.writerow([
                                                                     timestamp,
                                                                     ARM.STD_CE_Price_Org,
                                                                     ARM.STD_PE_Price_Org,
-                                                                    0,
                                                                     ARM.STR_CE_Price_Org,
                                                                     ARM.STR_PE_Price_Org,
+                                                                    0.0,
+                                                                    0.0,
+                                                                    0.0,
+                                                                    0.0,
                                                                     0,
                                                                     0,
                                                                     "False",
-                                                                    "False",
-                                                                    0,
-                                                                    0,
-                                                                    0
+                                                                    "False"
                                                                 ])
                                         ARM.std_str_file.flush()  # Ensure write to disk without closing
 
@@ -2648,31 +2653,34 @@ def APH_MAIN(stop_scheduled=False):
                                                                     timestamp,
                                                                     ARM.STD_CE_Symbol,
                                                                     ARM.STD_PE_Symbol,
-                                                                    "UDS",
                                                                     ARM.STR_CE_Symbol,
                                                                     ARM.STR_PE_Symbol,
                                                                     "UDS",
                                                                     "UDS",
-                                                                    "Signal",
-                                                                    "Signal",
+                                                                    "UDS",
+                                                                    "Diff",
                                                                     "Rising",
                                                                     "Falling",
-                                                                    "Diff"
+                                                                    "Signal",
+                                                                    "Signal"
+                                                                ])
+                                        ARM.std_str_csv_writer.writerow([
+                                                                    f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
                                                                 ])
                                         ARM.std_str_csv_writer.writerow([
                                                                     timestamp,
                                                                     ARM.STD_CE_Price_Org,
                                                                     ARM.STD_PE_Price_Org,
-                                                                    0,
                                                                     ARM.STR_CE_Price_Org,
                                                                     ARM.STR_PE_Price_Org,
+                                                                    0.0,
+                                                                    0.0,
+                                                                    0.0,
+                                                                    0.0,
                                                                     0,
                                                                     0,
                                                                     "False",
-                                                                    "False",
-                                                                    0,
-                                                                    0,
-                                                                    0
+                                                                    "False"
                                                                 ])
                                         ARM.std_str_file.flush()  # Ensure write to disk without closing
 
@@ -4698,6 +4706,12 @@ def Deadband_Pressed():
             temp = ARM.UDS_DEADBAND
             try:
                 ARM.UDS_DEADBAND = int(R1C8.get())
+                #---------------------------------
+                ARM.std_str_csv_writer.writerow([
+                                           f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                        ])
+                ARM.std_str_file.flush()  # Ensure write to disk without closing
+                #---------------------------------
             except:
                 ARM.UDS_DEADBAND = temp
         else:pass
@@ -4709,6 +4723,12 @@ def Min_Diff_Pressed():
             temp = ARM.STD_STR_MIN_diff
             try:
                 ARM.STD_STR_MIN_diff = float(R1C9.get())
+                #---------------------------------
+                ARM.std_str_csv_writer.writerow([
+                                           f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                        ])
+                ARM.std_str_file.flush()  # Ensure write to disk without closing
+                #---------------------------------
             except:
                 ARM.STD_STR_MIN_diff = temp
         else:pass
@@ -4720,6 +4740,12 @@ def Min_Bars_Pressed():
             temp = ARM.CONSECUTIVE_BAR_value
             try:
                 ARM.CONSECUTIVE_BAR_value = int(R1C10.get())
+                #---------------------------------
+                ARM.std_str_csv_writer.writerow([
+                                           f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                        ])
+                ARM.std_str_file.flush()  # Ensure write to disk without closing
+                #---------------------------------
             except:
                 ARM.CONSECUTIVE_BAR_value = temp
         else:pass
