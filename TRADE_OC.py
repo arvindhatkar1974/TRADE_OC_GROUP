@@ -2573,8 +2573,8 @@ def APH_MAIN(stop_scheduled=False):
                                                                     "Signal"
                                                                 ])
                                         ARM.std_str_csv_writer.writerow([
-                                                                    f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
-                                                                ])
+                                                                            f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                                                        ])
                                         ARM.std_str_csv_writer.writerow([
                                                                     timestamp,
                                                                     ARM.STD_CE_Price_Org,
@@ -2665,8 +2665,8 @@ def APH_MAIN(stop_scheduled=False):
                                                                     "Signal"
                                                                 ])
                                         ARM.std_str_csv_writer.writerow([
-                                                                    f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
-                                                                ])
+                                                                            f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                                                        ])
                                         ARM.std_str_csv_writer.writerow([
                                                                     timestamp,
                                                                     ARM.STD_CE_Price_Org,
@@ -4708,8 +4708,8 @@ def Deadband_Pressed():
                 ARM.UDS_DEADBAND = int(R1C8.get())
                 #---------------------------------
                 ARM.std_str_csv_writer.writerow([
-                                           f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
-                                        ])
+                                                    f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                                ])
                 ARM.std_str_file.flush()  # Ensure write to disk without closing
                 #---------------------------------
             except:
@@ -4725,8 +4725,8 @@ def Min_Diff_Pressed():
                 ARM.STD_STR_MIN_diff = float(R1C9.get())
                 #---------------------------------
                 ARM.std_str_csv_writer.writerow([
-                                           f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
-                                        ])
+                                                    f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                                ])
                 ARM.std_str_file.flush()  # Ensure write to disk without closing
                 #---------------------------------
             except:
@@ -4742,8 +4742,8 @@ def Min_Bars_Pressed():
                 ARM.CONSECUTIVE_BAR_value = int(R1C10.get())
                 #---------------------------------
                 ARM.std_str_csv_writer.writerow([
-                                           f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
-                                        ])
+                                                    f"Deadband : {ARM.UDS_DEADBAND}, Min Diff : {ARM.STD_STR_MIN_diff}, Min Bars : {ARM.CONSECUTIVE_BAR_value}"
+                                                ])
                 ARM.std_str_file.flush()  # Ensure write to disk without closing
                 #---------------------------------
             except:
