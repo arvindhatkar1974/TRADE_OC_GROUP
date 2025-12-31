@@ -1,3 +1,4 @@
+#--Final Copy of TRADE_OC4.py
 import json
 import os
 import os.path
@@ -265,13 +266,15 @@ class APH_GUI:
     R2C4flag = "RUN"                #--Clear Trade (RUN/RESET) Flag
     R1C3_Value = 0.00              #--OpeningBalance
     R1C4_Value = 0.00              #--LiveBalance
-    LPT_Value = 250
-    PPT_Value = 750
+    LPT_Value = 650
+    PPT_Value = 650
     R3C2_Value = R3C4_Value = R3C6_Value = R3C8_Value = 1
     Trade_Flag = 'DEMO_ONLY'
     NBF = ""
     R2C11flag = "Stop Loss (SL)-20"
     R2C11_Value = 20
+    SetSL_OnClickValue = -100
+    SetTR_OnClickValue = 100
 class APH_ARM:
     #---------------------------------
     def __init__(self, ns):
@@ -333,12 +336,13 @@ class APH_ARM:
     # RISING_EDGE_df = pd.DataFrame(columns=['BUY_CE'])   #--Not Implemented, so commented
     # FALLING_EDGE_df = pd.DataFrame(columns=['BUY_PE'])  #--Not Implemented, so commented
     UDS_DEADBAND = 5
-    STD_STR_MIN_diff = 0.4
+    STD_STR_MIN_diff = 0.8
     CONSECUTIVE_BAR_value = 3
     CONFIRM_BUYCE_Cur = False
     CONFIRM_BUYPE_Cur = False
     R_EDGE_Counter = 0
     F_EDGE_Counter = 0
+    Last_BoughtPrice = 0.0
 
     STR_CE_Strike = 0
     STR_PE_Strike = 0
@@ -2195,6 +2199,9 @@ def OTM_Blink_Status():
             else:
                 ARM.CONFIRM_BUYPE_Cur = False
 
+            uds_ce_canvas.itemconfig(text, text=f"{ARM.R_EDGE_Counter}")
+            uds_pe_canvas.itemconfig(text, text=f"{ARM.F_EDGE_Counter}")
+
             ARM.AVG_UDS_Prev = ARM.AVG_UDS_Cur
 
             # Append to CSV (non-blocking)
@@ -3094,12 +3101,17 @@ def Auto_Buy_Status():
         columns_to_copy = ['Time_In','Action','Avg_Price','Total_Qty','SqOffPrice','Symbol','P/L(P)','P/L(Rs)']
         current_closed_trade = ARM.Display_NetBuySell_df.loc[ARM.Display_NetBuySell_df['Symbol'] == ARM.Buy_Symbol, columns_to_copy].copy()
         if current_closed_trade.at[current_closed_trade.index[0], 'Action'] == "SELL":
-            print("AUTO Yes, Sold Earlier, now Buy (Square-Off)")            
+            print("AUTO Yes, Sold Earlier, now Buy (Square-Off)")
+            return False
         else:
             print("AUTO No, not Sold Earlier, Buy Again (Add Position)")
+            return True
     else:
         print("AUTO No, not Sold Earlier, Fresh Buy (New Position)")
+        return False
 def APH_BUY():
+    R0C5.focus_set()    #--Verify is it required ?
+    ARM.Edit_SL_Target = False
     NW_PO_BuyError = False
     if (ARM.order_id_buy is None):        #--Fresh New Order First Time
         if ARM.Target_SL_Hit_Flag:
@@ -3326,9 +3338,11 @@ def APH_BUY():
                     #--Display and Append
                     #print(current_closed_trade)
                     ARM.My_AllTrades = pd.concat([ARM.My_AllTrades, current_closed_trade], ignore_index=True)
-                else:pass
+                else:
+                    ARM.Last_BoughtPrice = ARM.BoughtPrice
                     # print("No, not Sold Earlier, Buy Again (Add Position)")
-            else:pass
+            else:
+                ARM.Last_BoughtPrice = ARM.BoughtPrice
                 # print("No, not Sold Earlier, Fresh Buy (New Position)")
             #ARM.My_AllTrades = ARM.Display_NetBuySell_df.copy()
             #--------------------------------------------------------------------------------------------
@@ -3558,6 +3572,8 @@ def APH_BUY():
         else:pass
     if ARM.myopenorder_status:root.after(1000,APH_BUY)
 def APH_SELL():
+    R0C5.focus_set()    #--Verify is it required ?
+    ARM.Edit_SL_Target = False
     NW_PO_SellError = False
     if (ARM.order_id_sell is None):        #--Fresh New Order First Time
         if ARM.Target_SL_Hit_Flag:
@@ -4951,35 +4967,30 @@ def Update_Popup_OC():
                     OC_Cell[index_of_bought_strike[0]+ARM.Display_Row][6].config(text="{:.2f} ({})".format(ARM.df_opt_final.iloc[index_of_bought_strike[0], 8],int(PEDisplay_Qty/ARM.found_lotsize_opt)),bg="#00E600")
             else:pass
 
-def on_SL_Target_enter(event, row, column):
-    ARM.Edit_SL_Target = True
-
-    # print("----Try to Pause Trade Update----")
-def on_SL_Target_leave(event, row, column):
-    pass
-    # ARM.Edit_SL_Target = False
-    # print("----started----")
 def on_SL_Target_click(event, row, column):
     ARM.Edit_SL_Target = True
+    GUI.SetSL_OnClickValue = OC_Cell_Value[row][8].get()
+    GUI.SetTR_OnClickValue = OC_Cell_Value[row][9].get()
+
 def on_SL_Target_Pressed(event, row, column):
     if(column == 8):
         try:
-            SET_SL = OC_Cell_Value[row][column].get()
-            OC_Cell_Value[row][column].set("{:.0f}".format(SET_SL))
+            SET_SL = float(OC_Cell_Value[row][column].get())
         except:
-            SET_SL = -100.00
-            OC_Cell_Value[row][column].set("{:.0f}".format(SET_SL))
+            # SET_SL = -100.00
+            SET_SL = GUI.SetSL_OnClickValue
 
+        OC_Cell_Value[row][column].set("{:.2f}".format(SET_SL))
         ARM.Display_NetBuySell_df.loc[row-28,'SL(P)'] = SET_SL
 
     elif(column == 9):
         try:
-            SET_TARGET = OC_Cell_Value[row][column].get()
-            OC_Cell_Value[row][column].set("{:.0f}".format(SET_TARGET))
+            SET_TARGET = float(OC_Cell_Value[row][column].get())
         except:
-            SET_TARGET = 100.00
-            OC_Cell_Value[row][column].set("{:.0f}".format(SET_TARGET))
+            # SET_TARGET = 100.00
+            SET_TARGET = GUI.SetTR_OnClickValue
 
+        OC_Cell_Value[row][column].set("{:.2f}".format(SET_TARGET))
         ARM.Display_NetBuySell_df.loc[row-28,'Target(P)'] = SET_TARGET
 
     else:pass
@@ -5042,8 +5053,15 @@ def on_buy_click(event, row, column):
 
                         existing_trade = any(ARM.Display_NetBuySell_df["Symbol"] == ARM.Buy_Symbol)
                         if (ARM.NetBuySell_len < 5 or existing_trade):
-                            Auto_Buy_Status()
-                            APH_BUY()
+                            if Auto_Buy_Status():
+                                Average_Limit = round ((GUI.LPT_Value/(ARM.found_lotsize_opt*2)), ndigits = 2)
+                                if ((ARM.Last_BoughtPrice - ARM.Buy_AskPrice) >= Average_Limit or
+                                    (ARM.Buy_AskPrice - ARM.Last_BoughtPrice) >= Average_Limit):
+                                    APH_BUY()   #--Adding/averaging to existing position
+                                else:
+                                    print(f"Not Adding Position, as Current LTP not +/- {Average_Limit}")
+                            else:
+                                APH_BUY()   #--New/Square-off Position
                         else:
                             print("M A X I M U M   T R A D E   L I M I T   I S   :   5")
                     elif (column==6):   #-- PE
@@ -5060,8 +5078,15 @@ def on_buy_click(event, row, column):
 
                         existing_trade = any(ARM.Display_NetBuySell_df["Symbol"] == ARM.Buy_Symbol)
                         if (ARM.NetBuySell_len < 5 or existing_trade):
-                            Auto_Buy_Status()
-                            APH_BUY()
+                            if Auto_Buy_Status():
+                                Average_Limit = round ((GUI.LPT_Value/(ARM.found_lotsize_opt*2)), ndigits = 2)
+                                if ((ARM.Last_BoughtPrice - ARM.Buy_AskPrice) >= Average_Limit or
+                                    (ARM.Buy_AskPrice - ARM.Last_BoughtPrice) >= Average_Limit):
+                                    APH_BUY()   #--Adding/averaging to existing position
+                                else:
+                                    print(f"Not Adding Position, as Current LTP not +/- {Average_Limit}")
+                            else:
+                                APH_BUY()   #--New/Square-off Position
                         else:
                             print("M A X I M U M   T R A D E   L I M I T   I S   :   5")
                     else:
@@ -5640,8 +5665,6 @@ if __name__ == "__main__":
                 OC_Cell_Value[i][j] = tk.DoubleVar()
                 OC_Cell[i][j] = tk.Entry(root,width=8,textvariable=OC_Cell_Value[i][j],justify=CENTER,fg="#F0F0F0",bg="#F0F0F0", borderwidth=0)
                 OC_Cell[i][j].grid(row=i,column=j,sticky='nsew')
-                # OC_Cell[i][j].bind("<Enter>", lambda event, row=i, column=j:on_SL_Target_enter(event, row, column))
-                # OC_Cell[i][j].bind("<Leave>", lambda event, row=i, column=j:on_SL_Target_leave(event, row, column))
                 OC_Cell[i][j].bind("<Button-1>", lambda event, row=i, column=j: on_SL_Target_click(event, row, column))
                 OC_Cell[i][j].bind('<Return>', lambda event,row=i,column=j:on_SL_Target_Pressed(event, row, column))
             elif(i in [28,29,30,31,32]) and (j in [10]):
@@ -5863,11 +5886,15 @@ if __name__ == "__main__":
     uds_ce_canvas = tk.Canvas(KWS_frame, width=20, height=20, highlightthickness=0, bg="#FCDFFF")
     uds_ce_canvas.grid(row=0, column=0, padx=10)
     circle = uds_ce_canvas.create_oval(3, 3, 17, 17, fill="yellow", outline="black")
+    text = uds_ce_canvas.create_text(10, 10,text="",fill="black",font=("Arial", 9, "bold"))
+    uds_ce_canvas.tag_bind(text, "<Button-1>", cepe_circle_click)
     uds_ce_canvas.tag_bind(circle, "<Button-1>", cepe_circle_click)
 
     uds_pe_canvas = tk.Canvas(KWS_frame, width=20, height=20, highlightthickness=0, bg="#FCDFFF")
     uds_pe_canvas.grid(row=0, column=2, padx=10)
     circle = uds_pe_canvas.create_oval(3, 3, 17, 17, fill="yellow", outline="black")
+    text = uds_pe_canvas.create_text(10, 10,text="",fill="black",font=("Arial", 9, "bold"))
+    uds_pe_canvas.tag_bind(text, "<Button-1>", cepe_circle_click)
     uds_pe_canvas.tag_bind(circle, "<Button-1>", cepe_circle_click)
     #-------------------------------------------
     ce_frame = tk.Frame(root, bg="#FCDFFF")
